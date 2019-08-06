@@ -23,31 +23,31 @@ model.add("Example")  # optional, add a model name.
 
 The available pieces to put in are:
 * Cylinder
-![cylinder](pipemesh/images/cylinder.png)
+![cylinder](https://raw.githubusercontent.com/Duncan-Hunter/pipemesh/master/pipemesh/images/cylinder.png)
 ```python
 piece = pieces.Cylinder(1, 0.5, [1,0,0], 0.1)
 # Length, radius, direction, mesh size
 ```
 * Cylinder with changing radius
-![change_rad](pipemesh/images/change_radius.png)
+![change_rad](https://raw.githubusercontent.com/Duncan-Hunter/pipemesh/master/pipemesh/images/change_radius.png)
 ```python
 piece = pieces.ChangeRadius(2, 1.8, 0.3, 0.2, [1 ,0, 0], 0.1)
 # length, change length, start radius, end radius, direction, mesh size
 ```
 * Smooth bends
-![bend](pipemesh/images/bend.png)
+![bend](https://raw.githubusercontent.com/Duncan-Hunter/pipemesh/master/pipemesh/images/bend.png)
 ```python
 piece = pieces.Curve(0.5, [1,0,-1], [0,1,0], 1, 0.2)
 # radius of cylinder, in direction, out direction, bend radius, mesh size
 ```
 * Mitered bends
-![mitered](pipemesh/images/mitered.png)
+![mitered](https://raw.githubusercontent.com/Duncan-Hunter/pipemesh/master/pipemesh/images/mitered.png)
 ```python
 piece = pieces.Mitered(0.5, [0, 1, 0], [1, 0, 0], 0.2)
 # radius of cylinder, in direction, out direction, mesh size
 ```
 * T Junctions
-![t_junc](pipemesh/images/t_junc.png)
+![t_junc](https://raw.githubusercontent.com/Duncan-Hunter/pipemesh/master/pipemesh/images/t_junc.png)
 ```python
 piece = pieces.TJunction(0.5, [1, 0, 0], [1, 1, -1], 0.1)
 # radius, direction, t direction, mesh size
@@ -89,7 +89,7 @@ Where out_number specifies which outlet of the pipe the piece will be added to. 
 
 Examples:
 * Chicane with mitered bends:
-![chicane](pipemesh/images/network2.png)
+![chicane](https://raw.githubusercontent.com/Duncan-Hunter/pipemesh/master/pipemesh/images/network2.png)
 ```python
 network = pipes.Network(1, 0.3, [1,0,0], 0.1)
 network.add_cylinder(1, 0.1)
@@ -99,7 +99,7 @@ network.add_mitered([1,0,0], 0.1)
 network.add_cylinder(1, 0.1)
 ```
 * Pipe with two junctions:
-![network](pipemesh/images/network.png)
+![network](https://raw.githubusercontent.com/Duncan-Hunter/pipemesh/master/pipemesh/images/network.png)
 ```python
 network.add_t_junction([-1,1,0], 0.05)
 network.add_t_junction([-1,-1,0], 0.05)
