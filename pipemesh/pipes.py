@@ -151,7 +151,7 @@ class Network():
         translate_vector = out_surface.centre - piece.in_surface.centre
         FACTORY.translate([piece.vol_tag], *list(translate_vector))
         FACTORY.synchronize()
-        piece.update_centres()
+        piece._update_centres()
         self.piece_list.append(piece)
         self.out_surfaces[out_number] = piece.out_surface
 
@@ -184,7 +184,7 @@ class Network():
         translate_vector = out_surface.centre - piece.in_surface.centre
         FACTORY.translate([piece.vol_tag], *list(translate_vector))
         FACTORY.synchronize()
-        piece.update_centres()
+        piece._update_centres()
         self.piece_list.append(piece)
         self.out_surfaces[out_number] = piece.out_surface
 
@@ -208,7 +208,7 @@ class Network():
         translate_vector = out_surface.centre - piece.in_surface.centre
         FACTORY.translate([piece.vol_tag], *list(translate_vector))
         FACTORY.synchronize()
-        piece.update_centres()
+        piece._update_centres()
         self.piece_list.append(piece)
         self.out_surfaces[out_number] = piece.out_surface
 
@@ -250,7 +250,7 @@ class Network():
         translate_vector = out_surface.centre - piece.in_surface.centre
         FACTORY.translate([piece.vol_tag], *list(translate_vector))
         FACTORY.synchronize()
-        piece.update_centres()
+        piece._update_centres()
         self.piece_list.append(piece)
         self.out_surfaces[out_number] = piece.out_surface
 
@@ -281,7 +281,7 @@ class Network():
         translate_vector = out_surface.centre - piece.in_surface.centre
         FACTORY.translate([piece.vol_tag], *list(translate_vector))
         FACTORY.synchronize()
-        piece.update_centres()
+        piece._update_centres()
         self.piece_list.append(piece)
         self.out_surfaces.append(piece.t_surface)
         self.out_surfaces[out_number] = piece.out_surface
@@ -365,8 +365,8 @@ class Network():
         FACTORY.rotate(dimtags, 0, 0, 0, *list(rot_axis), angle)
         FACTORY.synchronize()
         for piece in self.piece_list:
-            piece.update_centres()
-            piece.update_directions(rot_axis, angle)
+            piece._update_centres()
+            piece._update_directions(rot_axis, angle)
 
     def translate_network(self, vector):
         """Translates a network by vector.
@@ -381,7 +381,7 @@ class Network():
         FACTORY.translate(dimtags, *list(vector))
         FACTORY.synchronize()
         for piece in self.piece_list:
-            piece.update_centres()
+            piece._update_centres()
 
     def generate(self,
                  filename=None,
