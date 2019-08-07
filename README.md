@@ -1,6 +1,8 @@
 # pipemesh
 These tools use the GMSH-SDK (or GMSH API), available [here](http://gmsh.info/).
 
+The documentation for pipemesh can be found [here](https://pipemesh.readthedocs.io/en/latest/).
+
 ## Installation
 ```python
 python3 -m pip install -i https://test.pypi.org/simple/ pipemesh
