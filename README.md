@@ -5,7 +5,7 @@ The documentation for pipemesh can be found [here](https://pipemesh.readthedocs.
 
 ## Installation
 ```python
-python3 -m pip install -i https://test.pypi.org/simple/ pipemesh
+python3 -m pip install --user pipemesh
 ```
 
 Once completed, navigate to site-packages/pipemesh. Place the files libgmsh.so, libgmsh.so.4.3 and libgmsh.so.4.3.0, which can be downloaded from the GMSH website (link above).
