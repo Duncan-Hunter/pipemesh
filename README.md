@@ -94,11 +94,11 @@ Examples:
 ![chicane](https://raw.githubusercontent.com/Duncan-Hunter/pipemesh/master/pipemesh/images/network2.png)
 ```python
 network = pipes.Network(1, 0.3, [1,0,0], 0.1)
-network.add_cylinder(1, 0.1)
-network.add_mitered([0,1,0], 0.1)
-network.add_cylinder(1, 0.1)
+network.add_cylinder(0.2, 0.1)
+network.add_mitered([0,-1,0], 0.1)
+network.add_cylinder(0.4, 0.1)
 network.add_mitered([1,0,0], 0.1)
-network.add_cylinder(1, 0.1)
+network.add_cylinder(0.2, 0.1)
 ```
 * Pipe with two junctions:
 ![network](https://raw.githubusercontent.com/Duncan-Hunter/pipemesh/master/pipemesh/images/network.png)
