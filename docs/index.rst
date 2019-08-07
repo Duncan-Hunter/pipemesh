@@ -8,7 +8,6 @@ pipemesh is a python package allowing modular, sequential creation of pipes and 
    :maxdepth: 2
    :caption: Contents:
 
-   README.rst
    pipes.rst
    pieces.rst
 

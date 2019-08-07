@@ -40,8 +40,7 @@ release = '0.1.2'
 # ones.
 extensions = [
     'sphinx.ext.autodoc',
-    'sphinx.ext.coverage', 'sphinx.ext.napoleon',
-    'm2r'
+    'sphinx.ext.coverage', 'sphinx.ext.napoleon'
 ]
 
 # Add any paths that contain templates here, relative to this directory.
