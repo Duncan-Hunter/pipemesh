@@ -25,24 +25,25 @@ def _round_0(values):
     return values
 
 
-def _check_intersect(objects, tools):
+def _check_intersect(objects):
     """
-    Currently unused.
+    Currently used.
 
     Check if entities in tools intersect entities in objects.
-    objects: (list) 1st group of entities
-    tools: (list) 2nd group of entities
 
-    returns: (bool) True if there is an intersection.
-                    False if there is no intersection.
+    Args:
+        objects: (list) dimtags of volumes in model.
+
+    Raises:
+        ValueError: If pieces overlap.
     """
-    intersect = FACTORY.intersect(objects,
-                                  tools,
-                                  removeObject=False,
-                                  removeTool=False)[0]
-    if intersect:
-        return True
-    return False
+    print(objects)
+    for i in range(len(objects)):
+        obj = objects[i]
+        intersect = FACTORY.intersect([obj], objects[:i]+objects[i+1:], removeObject=False, removeTool=False)[0]
+        if intersect:
+            raise ValueError("Pieces overlap")
+    return
 
 
 class Network():
@@ -303,8 +304,9 @@ class Network():
 
         vol_tags = [piece.vol_tag for piece in self.piece_list]
 
-        if _check_intersect([vol_tags[0]], vol_tags[1:]):
-            raise ValueError("Pieces overlap")
+        # if _check_intersect([vol_tags[0]], vol_tags[1:]):
+        _check_intersect(vol_tags):
+
 
         out_dim_tags = FACTORY.fuse([vol_tags[0]], vol_tags[1:])[0]
         FACTORY.synchronize()
