@@ -77,7 +77,32 @@ def test4():
     print("Indiviual pieces created correctly.")
 
 
+def test5():
+    """Tests creation of velocities."""
+    network = pipes.Network(
+        1, 0.25, [1, 1, 1], 0.1
+    )
+    network.add_t_junction([1,0,0], 0.1)
+    network.generate(run_gui=False)
+    velos = network.get_velocities_reynolds([1, 3], 10000, 1000, 1e-3)
+    assert(np.allclose(velos[1], np.array([-0.02, 0, 0])))
+
+
+def test6():
+    """Tests get_ids methods."""
+    network = pipes.Network(
+        1, 0.25, [1, 1, 1], 0.1
+    )
+    network.add_t_junction([1, 0, 0], 0.1)
+    network.generate(run_gui=False)
+    inlet_phys_ids = np.array(network.get_inlet_outlet_phys_ids())
+    assert(np.allclose(inlet_phys_ids, np.array([1, 2, 3])))
+    cyl_phys_ids = network.get_cyl_phys_ids()
+    assert(np.allclose(np.array([cyl_phys_ids]), np.array([4, 5, 6, 7])))
+
 test1()
 test2()
 test3()
 test4()
+test5()
+test6()

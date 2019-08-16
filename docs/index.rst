@@ -8,11 +8,12 @@ Network class in pipes. A readme with installation and examples can be found on 
 .. _github: https://github.com/Duncan-Hunter/pipemesh
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 3
    :caption: Contents:
 
    pipes.rst
    pieces.rst
+   autompml.rst
 
 Indices and tables
 ==================

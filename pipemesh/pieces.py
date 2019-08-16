@@ -1,4 +1,6 @@
-"""Base classes for cylindrical GMSH pieces.
+#!/usr/bin/env python
+"""
+Base classes for cylindrical GMSH pieces.
 
 Also contains useful functions for these classes.
 """
@@ -449,7 +451,7 @@ class TJunction(PipePiece):
             raise ValueError("t_radius cannot be bigger than radius")
         direction = np.array(direction)
         t_angle = vec_angle(direction, t_direction)
-        if t_angle > np.pi/2:
+        if t_angle > np.pi / 2:
             self.inv_surfs = True
             beta = abs(t_angle) - np.pi / 2
         else:
@@ -461,9 +463,11 @@ class TJunction(PipePiece):
         # Calculating height needed to emerge from merge
 
         in_tag = (3, FACTORY.addCylinder(0, 0, 0, 0, 0, 1.1 * height, radius))
-        mid_tag = (3, FACTORY.addCylinder(0, 0, 0, 1.1 * height, 0, 0, t_radius))
-        out_tag = (3, FACTORY.addCylinder(0, 0, 0, 0, 0, -1.1 * height_short,
-                                          radius))
+        mid_tag = (3, FACTORY.addCylinder(0, 0, 0, 1.1 * height, 0, 0,
+                                          t_radius))
+        out_tag = (3,
+                   FACTORY.addCylinder(0, 0, 0, 0, 0, -1.1 * height_short,
+                                       radius))
 
         FACTORY.rotate([mid_tag], 0, 0, 0, 0, 1, 0, -beta)
         FACTORY.synchronize()
@@ -475,13 +479,13 @@ class TJunction(PipePiece):
         surfaces = MODEL.getBoundary([vol_tag], False)
 
         if self.inv_surfs:
-            FACTORY.rotate([vol_tag], 0,0,0, 1, 0, 0, np.pi)
+            FACTORY.rotate([vol_tag], 0, 0, 0, 1, 0, 0, np.pi)
             FACTORY.synchronize()
-            mid_direction = np.array([np.cos(beta),0,-np.sin(beta)])
+            mid_direction = np.array([np.cos(beta), 0, -np.sin(beta)])
             in_tag = surfaces[3]
             out_tag = surfaces[5]
         else:
-            mid_direction = np.array([np.cos(beta),0,np.sin(beta)])
+            mid_direction = np.array([np.cos(beta), 0, np.sin(beta)])
             in_tag = surfaces[5]
             out_tag = surfaces[3]
         t_tag = surfaces[4]
@@ -491,9 +495,8 @@ class TJunction(PipePiece):
 
         _rotate_outlet(vol_tag, t_direction, direction, mid_direction)
 
-        super(TJunction,
-              self).__init__(radius, vol_tag, in_tag, out_tag,
-                             direction, direction, lcar)
+        super(TJunction, self).__init__(radius, vol_tag, in_tag, out_tag,
+                                        direction, direction, lcar)
 
         self.t_surface = Surface(t_tag, t_centre, t_direction, t_radius)
 

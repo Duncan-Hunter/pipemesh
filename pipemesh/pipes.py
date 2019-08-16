@@ -1,3 +1,4 @@
+#!/usr/bin/env python
 """
 Create pipes and pipe networks using the Network class.
 
@@ -12,6 +13,7 @@ from pipemesh import pieces, gmsh
 import os
 import numpy as np
 import xml.etree.ElementTree as ET
+import collections
 
 MODEL = gmsh.model
 FACTORY = MODEL.occ
@@ -37,10 +39,12 @@ def _check_intersect(objects):
     Raises:
         ValueError: If pieces overlap.
     """
-    print(objects)
     for i in range(len(objects)):
         obj = objects[i]
-        intersect = FACTORY.intersect([obj], objects[:i]+objects[i+1:], removeObject=False, removeTool=False)[0]
+        intersect = FACTORY.intersect([obj],
+                                      objects[:i] + objects[i + 1:],
+                                      removeObject=False,
+                                      removeTool=False)[0]
         if intersect:
             raise ValueError("Pieces overlap")
     return
@@ -65,6 +69,21 @@ class Network():
             walls/outside of cylinder.
         physical_volume: Physical tag of the volume. Only available
             after generate.
+
+    Methods:
+        add_cylinder: Add a cylinder to the Network.
+        add_curve: Add a curve to the Network.
+        add_mitered: Add a mitered bend to the Network.
+        add_change_radius: Add a cylinder with change in radius to the Network.
+        add_t_junction: Add a T junction the the network.
+        generate: Fuse the network and generates the msh file.
+
+        get_inlet_outlet_phys_ids: Returns a list of physical ids of inlets.
+        get_cyl_phys_ids: Returns a list of physical ids of cylinder surfaces.
+        get_velocities_reynolds: Returns velocity vectors for inlets using
+            Reynolds number.
+        get_velocities_vel_mag: Returns velocity vectors for inlets using
+            velocity magnitude.
     """
 
     def __init__(self, length, radius, direction, lcar):
@@ -98,7 +117,7 @@ class Network():
         self.vol_tag = None  # Overall vol_tag, only after fuse.
         # dictionary of physical dim tags
         # to surface objects, which has information
-        self.physical_in_out_surfaces = {}
+        self.physical_in_out_surfaces = collections.OrderedDict()
         self.physical_no_slip = {}
         self.physical_volume = None
 
@@ -305,8 +324,7 @@ class Network():
         vol_tags = [piece.vol_tag for piece in self.piece_list]
 
         # if _check_intersect([vol_tags[0]], vol_tags[1:]):
-        _check_intersect(vol_tags):
-
+        _check_intersect(vol_tags)
 
         out_dim_tags = FACTORY.fuse([vol_tags[0]], vol_tags[1:])[0]
         FACTORY.synchronize()
@@ -344,13 +362,98 @@ class Network():
         Sets every surface to a physical surface, and the volume
         to a physical volume."""
         no_slip = self._fuse_objects()
-        for dimtag in no_slip:
-            phys_tag = MODEL.addPhysicalGroup(2, [dimtag[1]])
-            self.physical_no_slip[phys_tag] = dimtag
+
         for surface in self.in_surfaces + self.out_surfaces:
             phys_tag = MODEL.addPhysicalGroup(2, [surface.dimtag[1]])
             self.physical_in_out_surfaces[phys_tag] = surface
+
+        for dimtag in no_slip:
+            phys_tag = MODEL.addPhysicalGroup(2, [dimtag[1]])
+            self.physical_no_slip[phys_tag] = dimtag
         self.physical_volume = MODEL.addPhysicalGroup(3, [self.vol_tag[1]])
+
+    def get_inlet_outlet_phys_ids(self):
+        """Returns a list of physical ids of inlets.
+
+        By default, the inlet phys_id is 1,
+        then the default outlet is 2, followed by any added outlets in the order
+        they were added."""
+        phys_ids = list(self.physical_in_out_surfaces.keys())
+        return phys_ids
+
+    def get_cyl_phys_ids(self):
+        """Returns a list of physical ids of cylinder surfaces."""
+
+        phys_ids = list(self.physical_no_slip.keys())
+        return phys_ids
+
+    def get_velocities_reynolds(self, physical_ids, reynolds_no, density,
+                                viscosity):
+        """Creates velocity vectors for inlets using reynolds number.
+
+        Must be run after generate().
+        Physical ids are turned into indices, which are used to select surfaces
+        from self.physical_in_out_surfaces. By default, the inlet phys_id is 1,
+        then the default outlet is 2, followed by any added outlets in the order
+        they were added.
+        Reynolds is turned into velocity mag using Reynolds*visc/(2*radius*density).
+
+        Args:
+            physical_ids: (list of ints) physical ids of inlets/outlet surfaces to
+                get velocity vectors for.
+            reynolds_no: (float) reynolds number resulting from velocity vectors
+                created.
+            density: (float) density of the fluid simulated. Should match density
+                used in simulation for accurate results.
+            viscosity: (float) viscosity of the fluid simulated. Should match
+                viscosity used in simulation for accurate results.
+        """
+        if len(physical_ids) > len(self.physical_in_out_surfaces) - 1:
+            raise ValueError(
+                "Too many IDs given, at least one must be used for 0 pressure."
+            )
+        indices = np.array(physical_ids) - 1
+        # Get information
+        velocities = []
+        for index in indices:
+            surface = list(self.physical_in_out_surfaces.values())[index]
+            radius = surface.radius
+            direction = -surface.direction  # reversed to go into volume
+            # find magnitude of direction
+            mag = np.linalg.norm(direction)
+            # find magnitude of velocity vector
+            velo_mag = reynolds_no * viscosity / (2 * radius * density)
+            # rescale direction to match velocity magnitude
+            velocity = direction * (velo_mag / mag)
+            # add to velocities
+            velocities.append(velocity)
+        return velocities
+
+    def get_velocities_vel_mag(self, physical_ids, velocity_magnitude):
+        """Returns velocity vectors for inlets using velocity magnitude.
+
+        Must be run after generate().
+        Physical ids are turned into indices, which are used to select surfaces
+        from self.physical_in_out_surfaces. By default, the inlet phys_id is 1,
+        then the default outlet is 2, followed by any added outlets in the order
+        they were added."""
+        if len(physical_ids) > len(self.physical_in_out_surfaces) - 1:
+            raise ValueError(
+                "Too many IDs given, at least one must be used for 0 pressure."
+            )
+        indices = np.array(physical_ids) - 1
+        # Get information
+        velocities = []
+        for index in indices:
+            surface = list(self.physical_in_out_surfaces.values())[index]
+            direction = -surface.direction  # reversed to go into volume
+            # find magnitude of direction
+            mag = np.linalg.norm(direction)
+            # rescale direction to match velocity magnitude
+            velocity = direction * (abs(velocity_magnitude) / mag)
+            # add to velocities
+            velocities.append(velocity)
+        return velocities
 
     def rotate_network(self, axis, angle):
         """Rotates the network from old_direction to new_direction.
@@ -477,4 +580,6 @@ class Network():
                                  attrib={"centre": centre})
         volume = ET.SubElement(root, "volume")
         volume.text = str(self.vol_tag)
-        ET.ElementTree(root).write(fname + ".xml", encoding='utf-8')
+        ET.ElementTree(root).write(fname + ".xml",
+                                   encoding='utf-8',
+                                   xml_declaration=True)

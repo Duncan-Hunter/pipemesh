@@ -1,11 +1,9 @@
 
-import wrapper   # Download gmsh.py, and libgmsh files from gmsh-sdk
+from pipemesh import pipes, gmsh   # 
 import os
 import numpy as np
-# import wrapper.pieces
-# import wrapper.pipes
 
-model = wrapper.gmsh.model
+model = gmsh.model
 factory = model.occ
 mesh = model.mesh
 
@@ -31,7 +29,7 @@ fname = "junction"
 
 
 # Start a network
-network = wrapper.pipes.Network(0.5, 0.5, [0,0,-1], 0.1)
+network = pipes.Network(0.5, 0.5, [1,0,0], 0.1)
 
 # Create pipe with junctions
 # network.add_t_junction([-3,1,0], 0.05, t_radius=0.2)
@@ -67,10 +65,14 @@ network = wrapper.pipes.Network(0.5, 0.5, [0,0,-1], 0.1)
 
 # Sharp Chicane
 # network.add_cylinder(0.2, 0.1)
-# network.add_mitered([0,-1,0], 0.06)
+# network.add_mitered([0,-1,0], 0.1)
 # network.add_cylinder(0.4, 0.1)
-# network.add_mitered([0,0,-1], 0.1)
+# network.add_mitered([1,0,0], 0.1)
 # network.add_cylinder(0.2, 0.1)
+network.add_cylinder(1, 0.1)
+network.add_curve([0, -1, 0], 1, 0.1)
+network.add_curve([-1, 0, 0], 1, 0.1)
+network.add_curve([0, 1, 0], 1, 0.1)
 
 # Utility functions
 # network._set_mesh_sizes()

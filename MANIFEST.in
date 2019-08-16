@@ -1,0 +1,2 @@
+include pipemesh/images/*
+include pipemesh/icferst/3d_pipe_FEM.mpml
