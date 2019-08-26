@@ -3,6 +3,7 @@
 Base classes for cylindrical GMSH pieces.
 
 Also contains useful functions for these classes.
+Author: Duncan Hunter
 """
 # pylint: disable=C0411
 # pylint: disable=R0913
@@ -50,13 +51,18 @@ def _rotate_inlet(vol_tag, in_direction, out_direction):
     up_vector = np.array([0, 0, 1])
     # only have to rotate if its not facing up
     if np.allclose(in_direction, up_vector) is False:
+        # Find rotation axis
         rotate_axis = np.cross(up_vector, in_direction)
+        # If directions are parallel, set arbitrary rotate axis
         if np.allclose(rotate_axis, np.zeros(3)):
             rotate_axis = np.array([1, 0, 0])
+        # Normalise axis for accurate scipy rotation
         rotate_axis = rotate_axis / np.linalg.norm(rotate_axis)
         rotate_angle = vec_angle(in_direction, up_vector)
+        # GMSH rotation
         FACTORY.rotate([vol_tag], *[0, 0, 0], *list(rotate_axis), rotate_angle)
         FACTORY.synchronize()
+        # Rotate out direction with scipy
         rot_vec = rotate_angle * rotate_axis
         rot1 = Rotation.from_rotvec(rot_vec)
         new_out_direction = rot1.apply(out_direction)
@@ -100,8 +106,10 @@ def _rotate_outlet(vol_tag, out_direction, in_direction, new_out_direction):
     # Find angle between two vectors in bases.
     rot2_angle = vec_angle(alpha, beta)
     cross = np.cross(new_out_direction, out_direction)
+    # Find direction to rotate in.
     if np.dot(in_direction, cross) > 0:
         rot2_angle *= -1
+    # GMSH rotation.
     FACTORY.rotate([vol_tag], *[0, 0, 0], *list(in_direction), -rot2_angle)
     FACTORY.synchronize()
 
@@ -153,7 +161,15 @@ class PipePiece():
             out_direction: (np array, shape 3) xyz vector representing
                 direction going out.
             lcar: (float) mesh size of the piece.
+        Raises:
+            ValueError: Incorrect/Impossible dimensions.
         """
+        if radius <= 0:
+            raise ValueError("Radius must be greater than 0.")
+        if np.linalg.norm(np.array(in_direction)) == 0:
+            raise ValueError("Direction must be a vector with length.")
+        if np.array(in_direction).shape[0] != 3:
+            raise ValueError("3D vector needed.")
         self.lcar = lcar
         self.vol_tag = vol_tag
         self.vol_centre = np.array(FACTORY.getCenterOfMass(*vol_tag))
@@ -199,9 +215,14 @@ class Cylinder(PipePiece):
             direction: (list, length 3) xyz vector representing direction
                 cylinder is facing.
             lcar: (float) mesh size for this piece.
+        Raises:
+            ValueError: Incorrect/Impossible dimensions.
         """
+        if length <= 0:
+            raise ValueError("Length must be greater than 0.")
         self.length = length
         self.lcar = lcar
+        # OpenCASCADE cylinder creation.
         vol_tag = (3, FACTORY.addCylinder(0, 0, 0, 0, 0, length, radius))
         FACTORY.synchronize()
         surfaces = MODEL.getBoundary([vol_tag], False)
@@ -238,11 +259,18 @@ class ChangeRadius(PipePiece):
             direction: (list, length 3) xyz vector representing direction
                 cylinder outlet is facing.
             lcar: (float) mesh size for this piece.
+        Raises:
+            ValueError: Incorrect/Impossible dimensions.
         """
         if change_length >= length:
-            raise ValueError('change_length must be less than length')
-        if change_length < 0:
-            raise ValueError('change_length must be greater than 0')
+            raise ValueError('change_length must be less than length.')
+        if change_length <= 0:
+            raise ValueError('change_length must be greater than 0.')
+        if in_radius == out_radius:
+            raise ValueError("Radius is not different.")
+        if length <= 0:
+            raise ValueError("length must be greater than 0.")
+        # Add GMSH cylinder with largest radius.
         if out_radius > in_radius:
             vol_tag = (3, FACTORY.addCylinder(0, 0, 0, 0, 0, length,
                                               out_radius))
@@ -254,6 +282,7 @@ class ChangeRadius(PipePiece):
         in_tag = surfaces[2]
         out_tag = surfaces[1]
 
+        # Chamfer
         if out_radius > in_radius:
             lines = MODEL.getBoundary([in_tag], False, False)
             FACTORY.chamfer([vol_tag[1]], [lines[0][1]], [in_tag[1]],
@@ -309,11 +338,18 @@ class Curve(PipePiece):
                 direction going out.
             bend_radius: (float) radius of the bend of the curve.
             lcar: (float) mesh size for this piece.
+        Raises:
+            ValueError: Incorrect/Impossible dimensions.
         """
         in_tag = (2, FACTORY.addDisk(0, 0, 0, radius, radius))
         in_direction = np.array(in_direction)
         out_direction = np.array(out_direction)
-
+        if np.allclose(in_direction, out_direction):
+            raise ValueError("Directions must be different.")
+        if np.linalg.norm(out_direction) == 0:
+            raise ValueError("Out direction vector must have length.")
+        if out_direction.shape[0] != 3:
+            raise ValueError("3D vector needed.")
         revolve_axis = [0, 1, 0]
         centre_of_rotation = [bend_radius, 0, 0]
         angle = vec_angle(in_direction, out_direction)
@@ -324,9 +360,10 @@ class Curve(PipePiece):
 
         vol_tag = revolve_tags[1]
 
+        # Direction outlet is facing
         new_out_direction = np.array(
             [np.sin(np.pi - angle), 0,
-             -np.cos(np.pi - angle)])  # direction out is currently facing
+             -np.cos(np.pi - angle)])
         # Rotate so in_direction faces right way "Rot1"
         new_out_direction = _rotate_inlet(vol_tag, in_direction,
                                           new_out_direction)
@@ -369,11 +406,17 @@ class Mitered(PipePiece):
             out_direction: (list, length 3) xyz vector representing
             direction going out.
             lcar: (float) mesh size for this piece.
-
+        Raises:
+            ValueError: Incorrect/Impossible dimensions.
         """
         in_direction = np.array(in_direction)
-        out_direction = np.array(out_direction)  # clean up v's
-
+        out_direction = np.array(out_direction)
+        if np.allclose(in_direction, out_direction):
+            raise ValueError("Directions must be different.")
+        if np.linalg.norm(out_direction) == 0:
+            raise ValueError("Out direction vector must have length.")
+        if out_direction.shape[0] != 3:
+            raise ValueError("3D vector needed.")
         # Chamfer cylinder
         angle = vec_angle(out_direction, in_direction)
         height = 2.1 * radius * np.tan(angle / 2)
@@ -446,11 +489,21 @@ class TJunction(PipePiece):
             t_direction: (list, length 3) xyz vector represeting the
                 direction that the junction inlet faces.
             lcar: (float) mesh size for this piece.
+        Raises:
+            ValueError: Incorrect/Impossible dimensions.
         """
         if t_radius > radius:
             raise ValueError("t_radius cannot be bigger than radius")
         direction = np.array(direction)
+        t_direction = np.array(t_direction)
+        if np.allclose(direction, t_direction):
+            raise ValueError("Directions must be different.")
+        if np.linalg.norm(t_direction) == 0:
+            raise ValueError("T direction vector must have length.")
+        if t_direction.shape[0] != 3:
+            raise ValueError("3D vector needed.")
         t_angle = vec_angle(direction, t_direction)
+        # Create upside down or not. Ensures consistent surface assignment
         if t_angle > np.pi / 2:
             self.inv_surfs = True
             beta = abs(t_angle) - np.pi / 2
@@ -462,6 +515,7 @@ class TJunction(PipePiece):
         height_short = radius * abs(np.cos(beta))
         # Calculating height needed to emerge from merge
 
+        # Add GMSH cylinders
         in_tag = (3, FACTORY.addCylinder(0, 0, 0, 0, 0, 1.1 * height, radius))
         mid_tag = (3, FACTORY.addCylinder(0, 0, 0, 1.1 * height, 0, 0,
                                           t_radius))
@@ -469,15 +523,17 @@ class TJunction(PipePiece):
                    FACTORY.addCylinder(0, 0, 0, 0, 0, -1.1 * height_short,
                                        radius))
 
+        # Rotate joining cylinder
         FACTORY.rotate([mid_tag], 0, 0, 0, 0, 1, 0, -beta)
         FACTORY.synchronize()
-
+        # Fuse
         vol_tags = FACTORY.fuse([in_tag], [mid_tag, out_tag])[0]
         vol_tag = vol_tags[0]
         FACTORY.synchronize()
 
         surfaces = MODEL.getBoundary([vol_tag], False)
-
+        # If created upside down (done to ensure order is the same)
+        # Rotate the right way.
         if self.inv_surfs:
             FACTORY.rotate([vol_tag], 0, 0, 0, 1, 0, 0, np.pi)
             FACTORY.synchronize()

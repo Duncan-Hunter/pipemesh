@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="pipemesh",
-    version="0.2.2",
+    version="0.2.3",
     author="Duncan Hunter",
     author_email="dunchunter@hotmail.co.uk",
     description="A package for making pipe network meshes.",

@@ -2,7 +2,9 @@
 """
 Create pipes and pipe networks using the Network class.
 
-See the Readme for more details.
+See the Readme for more details and examples.
+
+Author: Duncan Hunter
 """
 
 # pylint: disable=C0411
@@ -29,8 +31,6 @@ def _round_0(values):
 
 def _check_intersect(objects):
     """
-    Currently used.
-
     Check if entities in tools intersect entities in objects.
 
     Args:
@@ -56,11 +56,6 @@ class Network():
     Pipes are built from an inlet in a sequential, modular fashion.
     When a junction is added, a new "out surface" is added, which
     can be added to. In this way, a network of pipes can be built.
-
-    Once the pipe has been made, the functions below can be used:
-    network._set_physical_groups()  # for IC-FERST
-    network._set_mesh_sizes()  # enforces lcar
-    network.write_info("info.csv")  # for you and IC-FERST
 
     Attributes:
         physical_in_out_surfaces: Dictionary of Physical surface tags
@@ -101,7 +96,7 @@ class Network():
         radius: (float) radius of pipe.
         direction: (list) Direction pipe will be facing in x, y, z
             vector format.
-        lcar: (float) Mesh size of this piece.
+        lcar: (float) Mesh size of this piece. Maximum mesh size of model.
         """
         gmsh.initialize()
         gmsh.option.setNumber("Mesh.CharacteristicLengthMax", lcar)
@@ -189,18 +184,17 @@ class Network():
 
         Raises:
             ValueError: new_direction vector isn't right size.
-                Bend radius isn't big enough.
+                Bend radius isn't big enough (<1.1 inlet radius).
         """
         # Check input
         out_number = self._out_number(out_number)
         out_surface = self.out_surfaces[out_number]
-        if len(new_direction) > 3:
-            raise ValueError("""Array given is too long (should be length 3,
-                for x, y, z)""")
         if bend_radius < 1.1 * out_surface.radius:
-            raise ValueError("""Bend of radius is not large enough""")
+            raise ValueError("""Bend radius is not large enough""")
+        # Create Piece
         piece = pieces.Curve(out_surface.radius, out_surface.direction,
                              new_direction, bend_radius, lcar)
+        # Translate Piece
         translate_vector = out_surface.centre - piece.in_surface.centre
         FACTORY.translate([piece.vol_tag], *list(translate_vector))
         FACTORY.synchronize()
@@ -223,8 +217,10 @@ class Network():
         """
         out_number = self._out_number(out_number)
         out_surface = self.out_surfaces[out_number]
+        # Create Piece
         piece = pieces.Mitered(out_surface.radius, out_surface.direction,
                                new_direction, lcar)
+        # Translate Piece
         translate_vector = out_surface.centre - piece.in_surface.centre
         FACTORY.translate([piece.vol_tag], *list(translate_vector))
         FACTORY.synchronize()
@@ -259,14 +255,10 @@ class Network():
         """
         out_number = self._out_number(out_number)
         out_surface = self.out_surfaces[out_number]
-        if change_length >= length:
-            raise ValueError('change_length must be less than length')
-        if change_length < 0:
-            raise ValueError('change_length must be greater than 0')
-        if new_radius == out_surface.radius:
-            raise ValueError("Radius is not different from old radius")
+        # Create Piece
         piece = pieces.ChangeRadius(length, change_length, out_surface.radius,
                                     new_radius, out_surface.direction, lcar)
+        # Translate Piece
         translate_vector = out_surface.centre - piece.in_surface.centre
         FACTORY.translate([piece.vol_tag], *list(translate_vector))
         FACTORY.synchronize()
@@ -295,9 +287,10 @@ class Network():
 
         if t_radius <= 0:
             t_radius = out_surface.radius
-
+        # Create Piece
         piece = pieces.TJunction(out_surface.radius, t_radius,
                                  out_surface.direction, t_direction, lcar)
+        # Translate Piece
         translate_vector = out_surface.centre - piece.in_surface.centre
         FACTORY.translate([piece.vol_tag], *list(translate_vector))
         FACTORY.synchronize()
@@ -310,7 +303,7 @@ class Network():
         """Fuses separate objects in Network together.
 
         Returns
-            no_slip: (list) The dimtags of in and out surfaces.
+            no_slip: (list) The dimtags of cylinder surfaces.
         """
         if len(self.piece_list) == 1:
             piece = self.piece_list[0]
@@ -513,11 +506,13 @@ class Network():
         self._set_mesh_sizes()
         self._set_physical_groups()
         MESH.generate(3)
+        # Set binary options
+        if binary:
+            gmsh.option.setNumber("Mesh.Binary", 1)
+        else:
+            gmsh.option.setNumber("Mesh.Binary", 0)
+        # Set filename
         if filename:
-            if binary:
-                gmsh.option.setNumber("Mesh.Binary", 1)
-            else:
-                gmsh.option.setNumber("Mesh.Binary", 0)
             name = filename + "." + mesh_format
             gmsh.write(name)
             os.rename(name, filename + ".msh")
