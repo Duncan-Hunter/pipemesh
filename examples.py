@@ -71,4 +71,12 @@ and generate."""
 # network.add_mitered([0,0,-1], 0.1)
 # network.add_cylinder(0.2, 0.1)
 
+"""Helix"""
+# for i in range(3):
+#     network.add_curve([0, 1, -0.25], 1, 0.1)
+#     network.add_curve([-1, 0, -0.25], 1, 0.1)
+#     network.add_curve([0, -1, -0.25], 1, 0.1)
+#     network.add_curve([1, 0, -0.25], 1, 0.1)
+
+
 # network.generate(filename=None, binary=False, write_info=False, write_xml=False, run_gui=True)

@@ -74,10 +74,53 @@ def test4():
     assert(np.allclose(change_radius.out_surface.centre, [1, 0, 0]))
     assert(np.allclose(change_radius.in_surface.centre, [0, 0, 0]))
     gmsh.finalize()
+
+    gmsh.initialize()
+    curve = pieces.Curve(
+        0.25, [1, 0, 0], [0, 0, 1], 1, 0.1
+    )
+    assert(np.allclose(curve.out_surface.centre, np.array([1, 0, 1])))
+    assert(np.allclose(curve.in_surface.centre, np.array([0, 0, 0])))
+    assert(np.allclose(curve.out_surface.direction, np.array([0, 0, 1])))
+    assert(np.allclose(curve.in_surface.direction, np.array([1, 0, 0])))
+    gmsh.finalize()
+
+    gmsh.initialize()
+    mitered = pieces.Mitered(
+        0.25, [1, 1, 0], [0, 0, 1], 0.1
+        )
+    assert(np.allclose(mitered.in_surface.direction, np.array([1, 1, 0])))
+    assert(np.allclose(mitered.out_surface.direction, np.array([0, 0, 1])))
+    gmsh.finalize()
+
+    gmsh.initialize()
+    t_junc = pieces.TJunction(
+        0.3, 0.3, [0, 0, 1], [1, 0, 0], 0.1
+    )
+    assert(np.allclose(t_junc.in_surface.direction, np.array([0, 0, 1])))
+    assert(np.allclose(t_junc.t_surface.direction, np.array([1, 0, 0])))
+    gmsh.finalize()
     print("Indiviual pieces created correctly.")
 
 
 def test5():
+    """Tests if network updates after rotation."""
+    network = pipes.Network(
+        1, 0.25, [1, 0, 0], 0.1
+    )
+    network.add_curve([0, 0, 1], 1, 0.1)
+    network.rotate_network([0, 1, 0], -np.pi/2)
+    network.generate(run_gui=False)
+    assert(np.allclose(
+        network.out_surfaces[0].direction, np.array([-1, 0, 0])
+        ))
+    assert(np.allclose(
+        network.in_surfaces[0].direction, np.array([0, 0, -1])
+        ))
+    print("Rotate whole network works correctly.")
+
+
+def test6():
     """Tests creation of velocities."""
     network = pipes.Network(
         1, 0.25, [1, 1, 1], 0.1
@@ -86,9 +129,12 @@ def test5():
     network.generate(run_gui=False)
     velos = network.get_velocities_reynolds([1, 3], 10000, 1000, 1e-3)
     assert(np.allclose(velos[1], np.array([-0.02, 0, 0])))
+    velos_2 = network.get_velocities_vel_mag([1, 3], 0.02)
+    assert(np.allclose(velos_2[1], np.array([-0.02, 0, 0])))
+    print("Get velocities methods working correctly.")
 
 
-def test6():
+def test7():
     """Tests get_ids methods."""
     network = pipes.Network(
         1, 0.25, [1, 1, 1], 0.1
@@ -99,6 +145,7 @@ def test6():
     assert(np.allclose(inlet_phys_ids, np.array([1, 2, 3])))
     cyl_phys_ids = network.get_cyl_phys_ids()
     assert(np.allclose(np.array([cyl_phys_ids]), np.array([4, 5, 6, 7])))
+    print("Get IDs method working correctly.")
 
 test1()
 test2()
@@ -106,3 +153,4 @@ test3()
 test4()
 test5()
 test6()
+test7()

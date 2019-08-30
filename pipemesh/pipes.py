@@ -81,7 +81,7 @@ class Network():
             velocity magnitude.
     """
 
-    def __init__(self, length, radius, direction, lcar):
+    def __init__(self, length, radius, direction, lcar=0.1):
         """
         Creates the inlet cylinder of a pipe.
 
@@ -99,6 +99,9 @@ class Network():
         lcar: (float) Mesh size of this piece. Maximum mesh size of model.
         """
         gmsh.initialize()
+        if lcar <= 0:
+            print("Defaulting to lcar of 0.1")
+            lcar = 0.1
         gmsh.option.setNumber("Mesh.CharacteristicLengthMax", lcar)
 
         direction = np.array(direction)
@@ -150,7 +153,7 @@ class Network():
             out_number -= 1
         return out_number
 
-    def add_cylinder(self, length, lcar, out_number=0):
+    def add_cylinder(self, length, lcar=0.1, out_number=0):
         """Adds a pipe to the Network at the outlet.
 
         Args:
@@ -159,6 +162,9 @@ class Network():
             out_number: Out surface to add to. If <= 1, will add to the
                 first out surface.
         """
+        if lcar <= 0:
+            print("Defaulting to lcar of 0.1")
+            lcar = 0.1
         out_number = self._out_number(out_number)
         out_surface = self.out_surfaces[out_number]
         piece = pieces.Cylinder(length, out_surface.radius,
@@ -170,7 +176,7 @@ class Network():
         self.piece_list.append(piece)
         self.out_surfaces[out_number] = piece.out_surface
 
-    def add_curve(self, new_direction, bend_radius, lcar, out_number=0):
+    def add_curve(self, new_direction, bend_radius, lcar=0.1, out_number=0):
         """Adds a curve to the Network at the outlet.
 
         Args:
@@ -187,6 +193,9 @@ class Network():
                 Bend radius isn't big enough (<1.1 inlet radius).
         """
         # Check input
+        if lcar <= 0:
+            print("Defaulting to lcar of 0.1")
+            lcar = 0.1
         out_number = self._out_number(out_number)
         out_surface = self.out_surfaces[out_number]
         if bend_radius < 1.1 * out_surface.radius:
@@ -202,7 +211,7 @@ class Network():
         self.piece_list.append(piece)
         self.out_surfaces[out_number] = piece.out_surface
 
-    def add_mitered(self, new_direction, lcar, out_number=0):
+    def add_mitered(self, new_direction, lcar=0.1, out_number=0):
         """Adds a mitered bend to the Network at the outlet.
 
         A mitered bend is a sharp change in direction. Hard to
@@ -215,6 +224,9 @@ class Network():
             out_number: Out surface to add to. If <= 1, will add to the
                 first out surface.
         """
+        if lcar <= 0:
+            print("Defaulting to lcar of 0.1")
+            lcar = 0.1
         out_number = self._out_number(out_number)
         out_surface = self.out_surfaces[out_number]
         # Create Piece
@@ -232,7 +244,7 @@ class Network():
                           length,
                           new_radius,
                           change_length,
-                          lcar,
+                          lcar=0.1,
                           out_number=0):
         """Adds a piece that changes the radius of the outlet.
 
@@ -253,6 +265,9 @@ class Network():
             ValueErrors: change_length is not between length and 0.
                 If radius does not change.
         """
+        if lcar <= 0:
+            print("Defaulting to lcar of 0.1")
+            lcar = 0.1
         out_number = self._out_number(out_number)
         out_surface = self.out_surfaces[out_number]
         # Create Piece
@@ -266,7 +281,7 @@ class Network():
         self.piece_list.append(piece)
         self.out_surfaces[out_number] = piece.out_surface
 
-    def add_t_junction(self, t_direction, lcar, t_radius=-1, out_number=0):
+    def add_t_junction(self, t_direction, lcar=0.1, t_radius=-1, out_number=0):
         """Adds a T junction to the Network at the outlet.
 
         This represents a pipe joining this pipe, creating a place to
@@ -281,7 +296,9 @@ class Network():
             out_number: Out surface to add to. If <= 1, will add to the
                 first out surface.
         """
-
+        if lcar <= 0:
+            print("Defaulting to lcar of 0.1")
+            lcar = 0.1
         out_number = self._out_number(out_number)
         out_surface = self.out_surfaces[out_number]
 
